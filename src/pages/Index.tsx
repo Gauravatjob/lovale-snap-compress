@@ -40,6 +40,18 @@ const Index = () => {
         img.onload = resolve;
       });
 
+      // Always use JPEG for better compression
+      const mimeType = 'image/jpeg';
+      
+      // Calculate if we need to scale down dimensions
+      let scale = 1;
+      const compressionRatio = targetSizeBytes / originalSize;
+      
+      // If target is less than 30% of original, we need to reduce dimensions too
+      if (compressionRatio < 0.3) {
+        scale = Math.sqrt(compressionRatio * 1.5); // Scale dimensions to help achieve target
+      }
+
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
       
@@ -47,19 +59,16 @@ const Index = () => {
         throw new Error("Could not get canvas context");
       }
       
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-
-      // Get the mime type, default to jpeg if not png
-      const mimeType = originalFile.type === 'image/png' ? 'image/png' : 'image/jpeg';
+      canvas.width = Math.floor(img.width * scale);
+      canvas.height = Math.floor(img.height * scale);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       
-      let quality = 0.95;
+      let quality = 0.9;
       let blob: Blob | null = null;
       let attempts = 0;
-      const maxAttempts = 20;
-      let minQuality = 0.05;
-      let maxQuality = 0.95;
+      const maxAttempts = 25;
+      let minQuality = 0.1;
+      let maxQuality = 0.9;
 
       // Binary search for optimal quality
       while (attempts < maxAttempts) {
@@ -73,10 +82,8 @@ const Index = () => {
 
         if (!blob) break;
 
-        const sizeDiff = blob.size - targetSizeBytes;
-        
-        // If within 5% of target, we're done
-        if (Math.abs(sizeDiff) < targetSizeBytes * 0.05 || blob.size <= targetSizeBytes) {
+        // Stop if we've achieved the target or are very close
+        if (blob.size <= targetSizeBytes) {
           break;
         }
 
@@ -90,7 +97,7 @@ const Index = () => {
         }
 
         // Prevent infinite loops
-        if (maxQuality - minQuality < 0.01) {
+        if (maxQuality - minQuality < 0.005) {
           break;
         }
 
@@ -104,9 +111,10 @@ const Index = () => {
           setCompressedSize(blob!.size);
           setIsProcessing(false);
           
+          const actualSizeKB = (blob!.size / 1024).toFixed(1);
           toast({
             title: "Compression complete!",
-            description: `Image compressed to ${(blob!.size / 1024).toFixed(1)} KB`,
+            description: `Image compressed to ${actualSizeKB} KB (target: ${targetSizeKB} KB)`,
           });
         };
         reader.readAsDataURL(blob);
