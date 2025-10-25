@@ -29,48 +29,52 @@ const ImagePreview = ({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-foreground">Original</h3>
-          <div className="overflow-hidden rounded-2xl bg-muted shadow-[var(--shadow-card)]">
-            <img
-              src={originalImage}
-              alt="Original"
-              className="h-64 w-full object-contain"
-            />
-          </div>
-          <p className="text-center text-sm font-medium text-muted-foreground">
-            {formatSize(originalSize)}
-          </p>
-        </div>
-
-        {compressedImage && compressedSize && (
+      {compressedImage && compressedSize ? (
+        <>
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-foreground">
-              Compressed
+              Compressed Image
             </h3>
             <div className="overflow-hidden rounded-2xl bg-muted shadow-[var(--shadow-card)]">
               <img
                 src={compressedImage}
                 alt="Compressed"
-                className="h-64 w-full object-contain"
+                className="h-96 w-full object-contain"
               />
             </div>
-            <p className="text-center text-sm font-medium text-primary">
-              {formatSize(compressedSize)} · {reductionPercent}% smaller
-            </p>
+            <div className="rounded-lg bg-card p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Original Size</p>
+                  <p className="text-lg font-semibold">{formatSize(originalSize)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Compressed Size</p>
+                  <p className="text-lg font-semibold text-primary">{formatSize(compressedSize)}</p>
+                </div>
+              </div>
+              <div className="mt-3 text-center">
+                <p className="text-sm font-medium text-primary">
+                  Reduced by {reductionPercent}%
+                </p>
+              </div>
+            </div>
           </div>
-        )}
-      </div>
 
-      {compressedImage && (
-        <Button
-          onClick={onDownload}
-          className="h-12 w-full bg-gradient-to-r from-primary to-accent text-lg font-semibold shadow-[var(--shadow-soft)] transition-all hover:scale-[1.02] hover:shadow-lg"
-        >
-          <Download className="mr-2 h-5 w-5" />
-          Download Compressed Image
-        </Button>
+          <Button
+            onClick={onDownload}
+            className="h-12 w-full bg-gradient-to-r from-primary to-accent text-lg font-semibold shadow-[var(--shadow-soft)] transition-all hover:scale-[1.02] hover:shadow-lg"
+          >
+            <Download className="mr-2 h-5 w-5" />
+            Download Compressed Image
+          </Button>
+        </>
+      ) : (
+        <div className="rounded-2xl bg-muted p-12 text-center">
+          <p className="text-muted-foreground">
+            Compressed image will appear here after processing
+          </p>
+        </div>
       )}
     </div>
   );

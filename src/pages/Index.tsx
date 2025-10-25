@@ -41,37 +41,63 @@ const Index = () => {
       });
 
       const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d")!;
+      const ctx = canvas.getContext("2d");
+      
+      if (!ctx) {
+        throw new Error("Could not get canvas context");
+      }
       
       canvas.width = img.width;
       canvas.height = img.height;
       ctx.drawImage(img, 0, 0);
 
-      let quality = 0.9;
+      // Get the mime type, default to jpeg if not png
+      const mimeType = originalFile.type === 'image/png' ? 'image/png' : 'image/jpeg';
+      
+      let quality = 0.95;
       let blob: Blob | null = null;
       let attempts = 0;
-      const maxAttempts = 10;
+      const maxAttempts = 20;
+      let minQuality = 0.05;
+      let maxQuality = 0.95;
 
+      // Binary search for optimal quality
       while (attempts < maxAttempts) {
         blob = await new Promise<Blob | null>((resolve) => {
           canvas.toBlob(
             (b) => resolve(b),
-            originalFile.type,
+            mimeType,
             quality
           );
         });
 
         if (!blob) break;
 
-        if (blob.size <= targetSizeBytes || quality <= 0.1) {
+        const sizeDiff = blob.size - targetSizeBytes;
+        
+        // If within 5% of target, we're done
+        if (Math.abs(sizeDiff) < targetSizeBytes * 0.05 || blob.size <= targetSizeBytes) {
           break;
         }
 
-        quality -= 0.1;
+        // Adjust quality using binary search
+        if (blob.size > targetSizeBytes) {
+          maxQuality = quality;
+          quality = (minQuality + quality) / 2;
+        } else {
+          minQuality = quality;
+          quality = (quality + maxQuality) / 2;
+        }
+
+        // Prevent infinite loops
+        if (maxQuality - minQuality < 0.01) {
+          break;
+        }
+
         attempts++;
       }
 
-      if (blob) {
+      if (blob && blob.size <= originalSize) {
         const reader = new FileReader();
         reader.onload = (e) => {
           setCompressedImage(e.target?.result as string);
@@ -80,17 +106,19 @@ const Index = () => {
           
           toast({
             title: "Compression complete!",
-            description: `Image compressed successfully to ${(blob!.size / 1024).toFixed(1)} KB`,
+            description: `Image compressed to ${(blob!.size / 1024).toFixed(1)} KB`,
           });
         };
         reader.readAsDataURL(blob);
+      } else {
+        throw new Error("Could not compress image to target size");
       }
     } catch (error) {
       console.error("Compression error:", error);
       setIsProcessing(false);
       toast({
         title: "Compression failed",
-        description: "An error occurred while compressing the image.",
+        description: error instanceof Error ? error.message : "An error occurred while compressing the image.",
         variant: "destructive",
       });
     }
@@ -143,6 +171,7 @@ const Index = () => {
                 <CompressionControls
                   onCompress={compressImage}
                   isProcessing={isProcessing}
+                  originalSize={originalSize}
                 />
                 <button
                   onClick={() => {
