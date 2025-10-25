@@ -65,44 +65,52 @@ const Index = () => {
       
       let quality = 0.9;
       let blob: Blob | null = null;
+      let bestBlob: Blob | null = null;
+      let bestDiff = Infinity;
       let attempts = 0;
-      const maxAttempts = 25;
+      const maxAttempts = 30;
       let minQuality = 0.1;
       let maxQuality = 0.9;
 
-      // Binary search for optimal quality
+      // Binary search for optimal quality - aim to get as close as possible to target
       while (attempts < maxAttempts) {
+        attempts++;
+        quality = (minQuality + maxQuality) / 2;
+
         blob = await new Promise<Blob | null>((resolve) => {
-          canvas.toBlob(
-            (b) => resolve(b),
-            mimeType,
-            quality
-          );
+          canvas.toBlob((b) => resolve(b), mimeType, quality);
         });
 
         if (!blob) break;
 
-        // Stop if we've achieved the target or are very close
-        if (blob.size <= targetSizeBytes) {
+        const diff = Math.abs(blob.size - targetSizeBytes);
+        
+        // Track the closest result to target
+        if (diff < bestDiff) {
+          bestDiff = diff;
+          bestBlob = blob;
+        }
+
+        // If we're within 2% of target, that's good enough
+        if (diff < targetSizeBytes * 0.02) {
           break;
         }
 
-        // Adjust quality using binary search
+        // Adjust quality range based on result
         if (blob.size > targetSizeBytes) {
           maxQuality = quality;
-          quality = (minQuality + quality) / 2;
         } else {
           minQuality = quality;
-          quality = (quality + maxQuality) / 2;
         }
 
         // Prevent infinite loops
-        if (maxQuality - minQuality < 0.005) {
+        if (maxQuality - minQuality < 0.003) {
           break;
         }
-
-        attempts++;
       }
+
+      // Use the best result we found (closest to target)
+      blob = bestBlob;
 
       if (blob && blob.size <= originalSize) {
         const reader = new FileReader();
