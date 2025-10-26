@@ -70,10 +70,21 @@ const ImagePreview = ({
           </Button>
         </>
       ) : (
-        <div className="rounded-2xl bg-muted p-12 text-center">
-          <p className="text-muted-foreground">
-            Compressed image will appear here after processing
-          </p>
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold text-foreground">
+            Original Image
+          </h3>
+          <div className="overflow-hidden rounded-2xl bg-muted shadow-[var(--shadow-card)]">
+            <img
+              src={originalImage}
+              alt="Original"
+              className="h-96 w-full object-contain"
+            />
+          </div>
+          <div className="rounded-lg bg-card p-4 shadow-sm text-center">
+            <p className="text-sm text-muted-foreground">Size</p>
+            <p className="text-lg font-semibold">{formatSize(originalSize)}</p>
+          </div>
         </div>
       )}
     </div>
