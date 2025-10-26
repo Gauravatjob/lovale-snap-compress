@@ -55,7 +55,11 @@ const CompressionControls = ({
     <div className="space-y-6 rounded-2xl bg-card p-6 shadow-[var(--shadow-card)]">
       <div className="rounded-lg bg-muted p-3">
         <p className="text-sm text-muted-foreground">
-          Original image size: <span className="font-semibold text-foreground">{originalSizeKB} KB</span>
+          {originalSize > 0 ? (
+            <>Original image size: <span className="font-semibold text-foreground">{originalSizeKB} KB</span></>
+          ) : (
+            <>No image uploaded yet</>
+          )}
         </p>
       </div>
 

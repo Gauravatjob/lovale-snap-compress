@@ -149,20 +149,40 @@ const Index = () => {
         </div>
 
         {/* Main Content */}
-        <div className="space-y-8">
-          {!originalImage ? <ImageUploader onImageUpload={handleImageUpload} isProcessing={isProcessing} /> : <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
-              <ImagePreview originalImage={originalImage} compressedImage={compressedImage} originalSize={originalSize} compressedSize={compressedSize} onDownload={handleDownload} />
-              <div className="space-y-6">
-                <CompressionControls onCompress={compressImage} isProcessing={isProcessing} originalSize={originalSize} />
-                <button onClick={() => {
-              setOriginalImage(null);
-              setCompressedImage(null);
-              setOriginalFile(null);
-            }} className="w-full rounded-xl border-2 border-border bg-card px-6 py-3 font-medium text-muted-foreground transition-all hover:border-primary hover:text-primary">
-                  Upload New Image
-                </button>
-              </div>
-            </div>}
+        <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
+          <div>
+            {!originalImage ? (
+              <ImageUploader onImageUpload={handleImageUpload} isProcessing={isProcessing} />
+            ) : (
+              <ImagePreview 
+                originalImage={originalImage} 
+                compressedImage={compressedImage} 
+                originalSize={originalSize} 
+                compressedSize={compressedSize} 
+                onDownload={handleDownload} 
+              />
+            )}
+          </div>
+          
+          <div className="space-y-6">
+            <CompressionControls 
+              onCompress={compressImage} 
+              isProcessing={isProcessing} 
+              originalSize={originalSize} 
+            />
+            {originalImage && (
+              <button 
+                onClick={() => {
+                  setOriginalImage(null);
+                  setCompressedImage(null);
+                  setOriginalFile(null);
+                }} 
+                className="w-full rounded-xl border-2 border-border bg-card px-6 py-3 font-medium text-muted-foreground transition-all hover:border-primary hover:text-primary"
+              >
+                Upload New Image
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Footer */}
