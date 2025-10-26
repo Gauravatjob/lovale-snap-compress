@@ -141,9 +141,7 @@ const Index = () => {
         <div className="mb-12 text-center">
           <div className="mb-4 flex items-center justify-center gap-2">
             <Sparkles className="h-8 w-8 text-primary" />
-            <h1 className="bg-gradient-to-r from-primary to-accent bg-clip-text text-5xl font-bold text-transparent">
-              Smart Image Compressor
-            </h1>
+            <h1 className="bg-gradient-to-r from-primary to-accent bg-clip-text text-5xl font-bold text-transparent">SizeDown - Image Compressor</h1>
           </div>
           <p className="text-lg text-muted-foreground">
             Compress your images to any size while maintaining quality
