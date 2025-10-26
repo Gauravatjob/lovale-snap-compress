@@ -25,6 +25,17 @@ const ImageUploader = ({ onImageUpload, isProcessing }: ImageUploaderProps) => {
   };
 
   const validateAndUpload = (file: File) => {
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    
+    if (file.size > MAX_FILE_SIZE) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 10MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!file.type.match(/image\/(jpeg|jpg|png)/)) {
       toast({
         title: "Invalid file type",

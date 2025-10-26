@@ -44,10 +44,10 @@ const CompressionControls = ({
 
   const isTargetSizeValid = () => {
     if (selectedSize === "-1") {
-      const target = parseInt(customSize);
-      return target > 0 && target < originalSizeKB;
+      const target = parseInt(customSize, 10);
+      return !isNaN(target) && target > 0 && Number.isInteger(target) && target < originalSizeKB;
     }
-    const target = parseInt(selectedSize);
+    const target = parseInt(selectedSize, 10);
     return target < originalSizeKB;
   };
 
@@ -90,6 +90,7 @@ const CompressionControls = ({
             id="custom-size"
             type="number"
             min="1"
+            step="1"
             max={originalSizeKB - 1}
             placeholder={`Enter size (max ${originalSizeKB - 1} KB)`}
             value={customSize}
