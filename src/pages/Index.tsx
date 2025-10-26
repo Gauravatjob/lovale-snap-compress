@@ -39,21 +39,14 @@ const Index = () => {
       // Always use JPEG for better compression
       const mimeType = 'image/jpeg';
 
-      // Calculate if we need to scale down dimensions
-      let scale = 1;
-      const compressionRatio = targetSizeBytes / originalSize;
-
-      // If target is less than 30% of original, we need to reduce dimensions too
-      if (compressionRatio < 0.3) {
-        scale = Math.sqrt(compressionRatio * 1.5); // Scale dimensions to help achieve target
-      }
+      // Keep original dimensions - only compress via quality
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
       if (!ctx) {
         throw new Error("Could not get canvas context");
       }
-      canvas.width = Math.floor(img.width * scale);
-      canvas.height = Math.floor(img.height * scale);
+      canvas.width = img.width;
+      canvas.height = img.height;
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       let quality = 0.9;
       let blob: Blob | null = null;
