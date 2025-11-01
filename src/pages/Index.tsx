@@ -137,7 +137,7 @@ const Index = () => {
             <h1 className="bg-gradient-to-r from-primary to-accent bg-clip-text text-5xl font-bold text-transparent py-[8px]">SizeDown - Image Compressor</h1>
           </div>
           <p className="text-lg text-muted-foreground">
-            Compress your images to any size while maintaining quality
+            Compress your images to any custom size without affecting the resolution
           </p>
         </div>
 
