@@ -57,7 +57,7 @@ const Index = () => {
       let minQuality = 0.001;
       let maxQuality = 0.95;
 
-      // Binary search for optimal quality
+      // Binary search for optimal quality - explore full range
       while (attempts < maxAttempts) {
         attempts++;
         quality = (minQuality + maxQuality) / 2;
@@ -71,31 +71,18 @@ const Index = () => {
           if (!bestBlobUnderTarget || blob.size > bestBlobUnderTarget.size) {
             bestBlobUnderTarget = blob;
           }
-        }
-        
-        // Track closest result over target (in case we can't get under)
-        if (blob.size > targetSizeBytes) {
+          // We found something under target, search higher quality
+          minQuality = quality;
+        } else {
+          // Too large, need lower quality
           if (!closestBlobOverTarget || blob.size < closestBlobOverTarget.size) {
             closestBlobOverTarget = blob;
           }
-        }
-
-        // Stop if we're very close to target (within 1%)
-        const diff = Math.abs(blob.size - targetSizeBytes);
-        if (blob.size <= targetSizeBytes && diff < targetSizeBytes * 0.01) {
-          bestBlobUnderTarget = blob;
-          break;
-        }
-
-        // Adjust quality range
-        if (blob.size > targetSizeBytes) {
           maxQuality = quality;
-        } else {
-          minQuality = quality;
         }
 
-        // Stop if range is too narrow
-        if (maxQuality - minQuality < 0.00001) {
+        // Stop only when quality range is exhausted
+        if (maxQuality - minQuality < 0.00005) {
           break;
         }
       }
