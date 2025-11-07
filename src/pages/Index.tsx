@@ -53,11 +53,11 @@ const Index = () => {
       let bestBlob: Blob | null = null;
       let bestDiff = Infinity;
       let attempts = 0;
-      const maxAttempts = 60;
-      let minQuality = 0.005;
+      const maxAttempts = 100;
+      let minQuality = 0.001; // Start very low to allow aggressive compression
       let maxQuality = 0.95;
 
-      // Binary search for optimal quality
+      // Binary search for optimal quality - be aggressive to hit target
       while (attempts < maxAttempts) {
         attempts++;
         quality = (minQuality + maxQuality) / 2;
@@ -67,34 +67,21 @@ const Index = () => {
         if (!blob) break;
         const diff = Math.abs(blob.size - targetSizeBytes);
 
-        // Always track the closest result to target size
+        // Always track the closest result
         if (diff < bestDiff) {
           bestDiff = diff;
           bestBlob = blob;
         }
-        
-        // Prefer results that are under target but as close as possible
-        if (blob.size <= targetSizeBytes && bestBlob && bestBlob.size <= targetSizeBytes) {
-          if (blob.size > bestBlob.size) {
-            bestBlob = blob;
-            bestDiff = diff;
-          }
-        }
 
-        // Stop if we're very close to target
-        if (blob.size <= targetSizeBytes && diff < targetSizeBytes * 0.02) {
-          break;
-        }
-
-        // Adjust quality range
+        // Adjust quality range - be aggressive
         if (blob.size > targetSizeBytes) {
           maxQuality = quality;
         } else {
           minQuality = quality;
         }
 
-        // Prevent infinite loops
-        if (maxQuality - minQuality < 0.0005) {
+        // Only stop if quality range is impossibly small
+        if (maxQuality - minQuality < 0.0001) {
           break;
         }
       }
