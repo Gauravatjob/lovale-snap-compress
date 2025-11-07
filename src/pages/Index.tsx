@@ -53,11 +53,11 @@ const Index = () => {
       let bestBlob: Blob | null = null;
       let bestDiff = Infinity;
       let attempts = 0;
-      const maxAttempts = 50;
-      let minQuality = 0.001; // Very aggressive - go down to 0.1% quality
+      const maxAttempts = 60;
+      let minQuality = 0.005;
       let maxQuality = 0.95;
 
-      // Binary search for optimal quality - aim to get as close as possible to target
+      // Binary search for optimal quality
       while (attempts < maxAttempts) {
         attempts++;
         quality = (minQuality + maxQuality) / 2;
@@ -67,31 +67,34 @@ const Index = () => {
         if (!blob) break;
         const diff = Math.abs(blob.size - targetSizeBytes);
 
-        // Track the closest result that's under or very close to target
-        if (blob.size <= targetSizeBytes && (!bestBlob || blob.size > bestBlob.size)) {
-          bestBlob = blob;
+        // Always track the closest result to target size
+        if (diff < bestDiff) {
           bestDiff = diff;
-        } else if (!bestBlob && diff < bestDiff) {
-          // If we haven't found anything under target yet, keep the closest
           bestBlob = blob;
-          bestDiff = diff;
+        }
+        
+        // Prefer results that are under target but as close as possible
+        if (blob.size <= targetSizeBytes && bestBlob && bestBlob.size <= targetSizeBytes) {
+          if (blob.size > bestBlob.size) {
+            bestBlob = blob;
+            bestDiff = diff;
+          }
         }
 
-        // If we're very close to target (within 2KB or 5%), accept it
-        if (blob.size <= targetSizeBytes && (diff < 2048 || diff < targetSizeBytes * 0.05)) {
-          bestBlob = blob;
+        // Stop if we're very close to target
+        if (blob.size <= targetSizeBytes && diff < targetSizeBytes * 0.02) {
           break;
         }
 
-        // Adjust quality range based on result
+        // Adjust quality range
         if (blob.size > targetSizeBytes) {
           maxQuality = quality;
         } else {
           minQuality = quality;
         }
 
-        // Prevent infinite loops - use smaller threshold for more precision
-        if (maxQuality - minQuality < 0.0001) {
+        // Prevent infinite loops
+        if (maxQuality - minQuality < 0.0005) {
           break;
         }
       }
