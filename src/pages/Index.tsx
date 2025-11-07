@@ -50,14 +50,14 @@ const Index = () => {
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       let quality = 0.9;
       let blob: Blob | null = null;
-      let bestBlob: Blob | null = null;
-      let bestDiff = Infinity;
+      let bestBlobUnderTarget: Blob | null = null;
+      let closestBlobOverTarget: Blob | null = null;
       let attempts = 0;
       const maxAttempts = 100;
-      let minQuality = 0.001; // Start very low to allow aggressive compression
+      let minQuality = 0.001;
       let maxQuality = 0.95;
 
-      // Binary search for optimal quality - be aggressive to hit target
+      // Binary search for optimal quality
       while (attempts < maxAttempts) {
         attempts++;
         quality = (minQuality + maxQuality) / 2;
@@ -65,29 +65,43 @@ const Index = () => {
           canvas.toBlob(b => resolve(b), mimeType, quality);
         });
         if (!blob) break;
-        const diff = Math.abs(blob.size - targetSizeBytes);
 
-        // Always track the closest result
-        if (diff < bestDiff) {
-          bestDiff = diff;
-          bestBlob = blob;
+        // Track best result under target (prefer largest one under target)
+        if (blob.size <= targetSizeBytes) {
+          if (!bestBlobUnderTarget || blob.size > bestBlobUnderTarget.size) {
+            bestBlobUnderTarget = blob;
+          }
+        }
+        
+        // Track closest result over target (in case we can't get under)
+        if (blob.size > targetSizeBytes) {
+          if (!closestBlobOverTarget || blob.size < closestBlobOverTarget.size) {
+            closestBlobOverTarget = blob;
+          }
         }
 
-        // Adjust quality range - be aggressive
+        // Stop if we're very close to target (within 1%)
+        const diff = Math.abs(blob.size - targetSizeBytes);
+        if (blob.size <= targetSizeBytes && diff < targetSizeBytes * 0.01) {
+          bestBlobUnderTarget = blob;
+          break;
+        }
+
+        // Adjust quality range
         if (blob.size > targetSizeBytes) {
           maxQuality = quality;
         } else {
           minQuality = quality;
         }
 
-        // Only stop if quality range is impossibly small
-        if (maxQuality - minQuality < 0.0001) {
+        // Stop if range is too narrow
+        if (maxQuality - minQuality < 0.00001) {
           break;
         }
       }
 
-      // Use the best result we found (closest to target)
-      blob = bestBlob;
+      // Use the best result we found - prefer under target, fallback to closest over
+      blob = bestBlobUnderTarget || closestBlobOverTarget;
       if (blob && blob.size <= originalSize) {
         const reader = new FileReader();
         reader.onload = e => {
