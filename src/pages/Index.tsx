@@ -42,7 +42,7 @@ const Index = () => {
       let bestBlob: Blob | null = null;
       let bestDiff = Infinity;
       
-      // Step 1: Try quality-only compression (maintain resolution)
+      // Step 1: Try aggressive quality-only compression (maintain resolution)
       const canvas1 = document.createElement("canvas");
       const ctx1 = canvas1.getContext("2d");
       if (!ctx1) throw new Error("Could not get canvas context");
@@ -51,10 +51,10 @@ const Index = () => {
       canvas1.height = img.height;
       ctx1.drawImage(img, 0, 0, canvas1.width, canvas1.height);
       
-      let minQuality = 0.01;
+      let minQuality = 0.001; // More aggressive minimum
       let maxQuality = 0.95;
       
-      for (let attempt = 0; attempt < 50; attempt++) {
+      for (let attempt = 0; attempt < 100; attempt++) { // More attempts
         const quality = (minQuality + maxQuality) / 2;
         
         const blob = await new Promise<Blob | null>(resolve => {
@@ -72,22 +72,20 @@ const Index = () => {
           }
           minQuality = quality;
         } else {
-          if (!bestBlob || currentDiff < bestDiff) {
-            bestBlob = blob;
-            bestDiff = currentDiff;
-          }
           maxQuality = quality;
         }
         
+        // Accept if we're within 2% of target
         if (blob.size <= targetSizeBytes && currentDiff < targetSizeBytes * 0.02) {
           break;
         }
         
-        if (maxQuality - minQuality < 0.0001) break;
+        if (maxQuality - minQuality < 0.00001) break;
       }
       
-      // Step 2: If quality-only didn't reach target, reduce dimensions
-      if (!bestBlob || bestBlob.size > targetSizeBytes) {
+      // Step 2: Only reduce dimensions if we couldn't get reasonably close with quality-only
+      // Allow up to 10% over target before reducing dimensions
+      if (!bestBlob || bestBlob.size > targetSizeBytes * 1.1) {
         for (let scale = 0.9; scale >= 0.1; scale -= 0.1) {
           const canvas2 = document.createElement("canvas");
           const ctx2 = canvas2.getContext("2d");
