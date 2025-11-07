@@ -39,63 +39,55 @@ const Index = () => {
       // Always use JPEG for better compression
       const mimeType = 'image/jpeg';
 
-      // Ultra-aggressive compression: try quality first, then scale dimensions
+      // Keep original dimensions - only compress via quality (extremely aggressive)
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        throw new Error("Could not get canvas context");
+      }
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
       let bestBlob: Blob | null = null;
       let bestDiff = Infinity;
       
-      // Try different dimension scales (100%, 90%, 80%, ... down to 10%)
-      for (let scale = 1.0; scale >= 0.1; scale -= 0.1) {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        if (!ctx) continue;
+      // Ultra-aggressive binary search for quality only
+      let minQuality = 0.01;
+      let maxQuality = 0.95;
+      
+      for (let attempt = 0; attempt < 100; attempt++) {
+        const quality = (minQuality + maxQuality) / 2;
         
-        // Scale dimensions
-        canvas.width = Math.max(1, Math.floor(img.width * scale));
-        canvas.height = Math.max(1, Math.floor(img.height * scale));
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise<Blob | null>(resolve => {
+          canvas.toBlob(b => resolve(b), mimeType, quality);
+        });
         
-        // Binary search for optimal quality at this scale
-        let minQuality = 0.01;
-        let maxQuality = 0.95;
+        if (!blob) break;
         
-        for (let attempt = 0; attempt < 30; attempt++) {
-          const quality = (minQuality + maxQuality) / 2;
-          
-          const blob = await new Promise<Blob | null>(resolve => {
-            canvas.toBlob(b => resolve(b), mimeType, quality);
-          });
-          
-          if (!blob) break;
-          
-          const currentDiff = Math.abs(blob.size - targetSizeBytes);
-          
-          // Keep the best result that's under or closest to target
-          if (blob.size <= targetSizeBytes) {
-            if (!bestBlob || blob.size > bestBlob.size) {
-              bestBlob = blob;
-              bestDiff = currentDiff;
-            }
-            minQuality = quality; // Try higher quality
-          } else {
-            if (!bestBlob || currentDiff < bestDiff) {
-              bestBlob = blob;
-              bestDiff = currentDiff;
-            }
-            maxQuality = quality; // Try lower quality
+        const currentDiff = Math.abs(blob.size - targetSizeBytes);
+        
+        // Keep the best result that's under or closest to target
+        if (blob.size <= targetSizeBytes) {
+          if (!bestBlob || blob.size > bestBlob.size) {
+            bestBlob = blob;
+            bestDiff = currentDiff;
           }
-          
-          // Stop if we found a great match
-          if (blob.size <= targetSizeBytes && currentDiff < targetSizeBytes * 0.05) {
-            break;
+          minQuality = quality; // Try higher quality
+        } else {
+          if (!bestBlob || currentDiff < bestDiff) {
+            bestBlob = blob;
+            bestDiff = currentDiff;
           }
-          
-          if (maxQuality - minQuality < 0.001) break;
+          maxQuality = quality; // Try lower quality
         }
         
-        // If we found something under target, we're done
-        if (bestBlob && bestBlob.size <= targetSizeBytes) {
+        // Stop if we found a great match
+        if (blob.size <= targetSizeBytes && currentDiff < targetSizeBytes * 0.02) {
           break;
         }
+        
+        if (maxQuality - minQuality < 0.0001) break;
       }
       
       const blob = bestBlob;
