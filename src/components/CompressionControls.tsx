@@ -119,8 +119,8 @@ const CompressionControls = ({
       
       {originalSize > 0 && (
         <p className="text-xs text-green-600 dark:text-green-400 text-center leading-relaxed">
-          This image can be reduced to approximately {Math.ceil(originalSizeKB * 0.05)} KB while maintaining resolution. 
-          Going beyond this limit may require changing resolution to achieve the target.
+          This image can be reduced to approximately {Math.ceil(originalSizeKB * 0.10)} KB while maintaining resolution. 
+          Smaller sizes will automatically reduce resolution to achieve the target.
         </p>
       )}
     </div>

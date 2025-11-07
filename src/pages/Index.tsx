@@ -39,55 +39,103 @@ const Index = () => {
       // Always use JPEG for better compression
       const mimeType = 'image/jpeg';
 
-      // Keep original dimensions - only compress via quality (extremely aggressive)
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        throw new Error("Could not get canvas context");
-      }
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      
       let bestBlob: Blob | null = null;
       let bestDiff = Infinity;
       
-      // Ultra-aggressive binary search for quality only
+      // Step 1: Try quality-only compression (maintain resolution)
+      const canvas1 = document.createElement("canvas");
+      const ctx1 = canvas1.getContext("2d");
+      if (!ctx1) throw new Error("Could not get canvas context");
+      
+      canvas1.width = img.width;
+      canvas1.height = img.height;
+      ctx1.drawImage(img, 0, 0, canvas1.width, canvas1.height);
+      
       let minQuality = 0.01;
       let maxQuality = 0.95;
       
-      for (let attempt = 0; attempt < 100; attempt++) {
+      for (let attempt = 0; attempt < 50; attempt++) {
         const quality = (minQuality + maxQuality) / 2;
         
         const blob = await new Promise<Blob | null>(resolve => {
-          canvas.toBlob(b => resolve(b), mimeType, quality);
+          canvas1.toBlob(b => resolve(b), mimeType, quality);
         });
         
         if (!blob) break;
         
         const currentDiff = Math.abs(blob.size - targetSizeBytes);
         
-        // Keep the best result that's under or closest to target
         if (blob.size <= targetSizeBytes) {
           if (!bestBlob || blob.size > bestBlob.size) {
             bestBlob = blob;
             bestDiff = currentDiff;
           }
-          minQuality = quality; // Try higher quality
+          minQuality = quality;
         } else {
           if (!bestBlob || currentDiff < bestDiff) {
             bestBlob = blob;
             bestDiff = currentDiff;
           }
-          maxQuality = quality; // Try lower quality
+          maxQuality = quality;
         }
         
-        // Stop if we found a great match
         if (blob.size <= targetSizeBytes && currentDiff < targetSizeBytes * 0.02) {
           break;
         }
         
         if (maxQuality - minQuality < 0.0001) break;
+      }
+      
+      // Step 2: If quality-only didn't reach target, reduce dimensions
+      if (!bestBlob || bestBlob.size > targetSizeBytes) {
+        for (let scale = 0.9; scale >= 0.1; scale -= 0.1) {
+          const canvas2 = document.createElement("canvas");
+          const ctx2 = canvas2.getContext("2d");
+          if (!ctx2) continue;
+          
+          canvas2.width = Math.max(1, Math.floor(img.width * scale));
+          canvas2.height = Math.max(1, Math.floor(img.height * scale));
+          ctx2.drawImage(img, 0, 0, canvas2.width, canvas2.height);
+          
+          minQuality = 0.01;
+          maxQuality = 0.95;
+          
+          for (let attempt = 0; attempt < 30; attempt++) {
+            const quality = (minQuality + maxQuality) / 2;
+            
+            const blob = await new Promise<Blob | null>(resolve => {
+              canvas2.toBlob(b => resolve(b), mimeType, quality);
+            });
+            
+            if (!blob) break;
+            
+            const currentDiff = Math.abs(blob.size - targetSizeBytes);
+            
+            if (blob.size <= targetSizeBytes) {
+              if (!bestBlob || blob.size > bestBlob.size) {
+                bestBlob = blob;
+                bestDiff = currentDiff;
+              }
+              minQuality = quality;
+            } else {
+              if (!bestBlob || currentDiff < bestDiff) {
+                bestBlob = blob;
+                bestDiff = currentDiff;
+              }
+              maxQuality = quality;
+            }
+            
+            if (blob.size <= targetSizeBytes && currentDiff < targetSizeBytes * 0.05) {
+              break;
+            }
+            
+            if (maxQuality - minQuality < 0.001) break;
+          }
+          
+          if (bestBlob && bestBlob.size <= targetSizeBytes) {
+            break;
+          }
+        }
       }
       
       const blob = bestBlob;
