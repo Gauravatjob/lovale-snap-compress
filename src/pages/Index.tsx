@@ -210,6 +210,19 @@ const Index = () => {
               </aside>
             </section>}
         </main>
+
+        {/* Footer */}
+        <footer className="mt-16 border-t border-border pt-8 text-center">
+          <p className="text-muted-foreground">
+            Reach out:{" "}
+            <a 
+              href="mailto:hello@gurux6.com" 
+              className="text-primary hover:text-primary/80 transition-colors"
+            >
+              hello@gurux6.com
+            </a>
+          </p>
+        </footer>
       </div>
     </div>;
 };
