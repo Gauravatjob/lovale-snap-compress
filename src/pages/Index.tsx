@@ -175,35 +175,38 @@ const Index = () => {
   return <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
       <div className="container mx-auto max-w-6xl px-4 py-12">
         {/* Header */}
-        <div className="mb-12 text-center">
+        <header className="mb-12 text-center">
           <div className="mb-4 flex items-center justify-center gap-2">
-            <Sparkles className="h-8 w-8 text-primary" />
+            <Sparkles className="h-8 w-8 text-primary" aria-hidden="true" />
             <h1 className="bg-gradient-to-r from-primary to-accent bg-clip-text text-5xl font-bold text-transparent py-[8px]">SizeDown - Image Compressor</h1>
           </div>
           <p className="text-lg text-muted-foreground">
             Compress your images to any custom size without affecting the resolution
           </p>
-        </div>
+        </header>
 
         {/* Main Content */}
-        <div className="space-y-8">
-          {!originalImage ? <ImageUploader onImageUpload={handleImageUpload} isProcessing={isProcessing} /> : <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
-              <ImagePreview originalImage={originalImage} compressedImage={compressedImage} originalSize={originalSize} compressedSize={compressedSize} onDownload={handleDownload} />
-              <div className="space-y-6">
-                <CompressionControls onCompress={compressImage} isProcessing={isProcessing} originalSize={originalSize} />
-                <button onClick={() => {
-              setOriginalImage(null);
-              setCompressedImage(null);
-              setOriginalFile(null);
-            }} className="w-full rounded-xl border-2 border-border bg-card px-6 py-3 font-medium text-muted-foreground transition-all hover:border-primary hover:text-primary">
-                  Upload New Image
-                </button>
-              </div>
-            </div>}
-        </div>
-
-        {/* Footer */}
-        
+        <main className="space-y-8">
+          {!originalImage ? <section aria-label="Image upload section">
+              <ImageUploader onImageUpload={handleImageUpload} isProcessing={isProcessing} />
+            </section> : <section className="grid gap-8 lg:grid-cols-[2fr_1fr]" aria-label="Image compression section">
+              <article aria-label="Image preview">
+                <ImagePreview originalImage={originalImage} compressedImage={compressedImage} originalSize={originalSize} compressedSize={compressedSize} onDownload={handleDownload} />
+              </article>
+              <aside aria-label="Compression controls">
+                <div className="space-y-6">
+                  <CompressionControls onCompress={compressImage} isProcessing={isProcessing} originalSize={originalSize} />
+                  <button onClick={() => {
+                setOriginalImage(null);
+                setCompressedImage(null);
+                setOriginalFile(null);
+              }} className="w-full rounded-xl border-2 border-border bg-card px-6 py-3 font-medium text-muted-foreground transition-all hover:border-primary hover:text-primary" aria-label="Upload a new image">
+                    Upload New Image
+                  </button>
+                </div>
+              </aside>
+            </section>}
+        </main>
       </div>
     </div>;
 };
