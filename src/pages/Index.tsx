@@ -4,6 +4,7 @@ import ImageUploader from "@/components/ImageUploader";
 import CompressionControls from "@/components/CompressionControls";
 import ImagePreview from "@/components/ImagePreview";
 import { useToast } from "@/hooks/use-toast";
+import logo from "@/assets/sizedown-logo.png";
 const Index = () => {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [compressedImage, setCompressedImage] = useState<string | null>(null);
@@ -176,8 +177,10 @@ const Index = () => {
       <div className="container mx-auto max-w-6xl px-4 py-12">
         {/* Header */}
         <header className="mb-12 text-center">
+          <div className="mb-6 flex justify-center">
+            <img src={logo} alt="SizeDown Logo" className="h-32 w-32" />
+          </div>
           <div className="mb-4 flex items-center justify-center gap-2">
-            <Sparkles className="h-8 w-8 text-primary" aria-hidden="true" />
             <h1 className="bg-gradient-to-r from-primary to-accent bg-clip-text text-5xl font-bold text-transparent py-[8px]">SizeDown - Image Compressor</h1>
           </div>
           <p className="text-lg text-muted-foreground">
